@@ -1,0 +1,146 @@
+import type { InventoryItem } from "@/types/inventory";
+import { Trash2, Edit2, PlusCircle, MinusCircle, Search, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AddItemDialog } from "./AddItemDialog";
+import { useState } from "react";
+import { SIZES } from "@/types/inventory";
+import { useAuth } from "@/context/AuthContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import Link from "next/link";
+import { Input } from "./ui/input";
+
+interface InventoryCardProps {
+  item: InventoryItem;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, updates: Partial<InventoryItem>) => void;
+  onAdjust: (itemId: string, size: string, color: string, delta: number) => void;
+  index: number;
+}
+
+export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: InventoryCardProps) {
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
+  const [quickSize, setQuickSize] = useState("");
+  const [quickColor, setQuickColor] = useState("Black");
+  
+  const totalQty = (item.variants || []).reduce((sum, v) => sum + (v.quantity > 0 ? v.quantity : 0), 0);
+  const activeVariants = (item.variants || []).filter(v => v.quantity > 0);
+
+  const handleQuickAdjust = (delta: number) => {
+    if (!quickSize || !quickColor) return;
+    onAdjust(item.id, quickSize, quickColor, delta);
+  };
+
+  return (
+    <div
+      className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300 animate-fade-in flex flex-col"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      <div className="relative aspect-3/4 overflow-hidden shrink-0">
+        <img
+          src={item.imageUrl}
+          alt={item.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-foreground/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute top-2 right-2 flex gap-2">
+          {isAdmin && (
+            <>
+              <AddItemDialog 
+                initialData={item} 
+                onUpdate={onUpdate}
+                trigger={
+                  <button className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
+                    <Edit2 className="h-3.5 w-3.5 text-foreground" />
+                  </button>
+                }
+              />
+              <button
+                onClick={() => onDelete(item.id)}
+                className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+              </button>
+            </>
+          )}
+        </div>
+        <div className="absolute bottom-2 left-2">
+          <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-foreground text-xs font-body">
+            {item.type}
+          </Badge>
+        </div>
+      </div>
+      <div className="p-3.5 flex flex-col flex-1">
+        <div className="flex items-start justify-between gap-1">
+          <Link href={`/inventory/${item.id}`} className="hover:text-primary transition-colors flex-1 min-w-0">
+            <h3 className="font-display text-sm font-semibold leading-tight truncate">{item.name}</h3>
+          </Link>
+          <Link href={`/inventory/${item.id}`} className="text-muted-foreground hover:text-primary transition-colors">
+            <ExternalLink className="h-3 w-3" />
+          </Link>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 font-body">{totalQty} total pieces</p>
+        
+        {/* Active Variants Badge Cloud */}
+        <div className="flex flex-wrap gap-1 mt-2.5">
+          {activeVariants.slice(0, 4).map((v) => (
+            <div
+              key={`${v.size}-${v.color}`}
+              className="inline-flex items-center text-[9px] font-medium font-body bg-muted text-muted-foreground rounded px-1.5 py-0.5 gap-1"
+            >
+              <span className="text-foreground font-bold">{v.size}</span>
+              <span className="opacity-70">{v.color}</span>
+              <span className="text-primary font-bold">{v.quantity}</span>
+            </div>
+          ))}
+          {activeVariants.length > 4 && (
+            <span className="text-[9px] text-muted-foreground font-medium pt-1">+{activeVariants.length - 4} more</span>
+          )}
+          {activeVariants.length === 0 && (
+            <span className="text-[10px] text-muted-foreground italic">Out of stock</span>
+          )}
+        </div>
+
+        {/* Quick Adjust Dropdown */}
+        {isAdmin && (
+          <div className="mt-auto pt-3 flex gap-1 items-center">
+            <div className="flex-[2] min-w-0">
+              <Input
+                value={quickColor}
+                onChange={(e) => setQuickColor(e.target.value)}
+                placeholder="Color"
+                className="h-7 text-[10px] py-0 bg-muted/30"
+              />
+            </div>
+            <div className="flex-1">
+              <Select value={quickSize} onValueChange={setQuickSize}>
+                <SelectTrigger className="h-7 text-[10px] py-0 border-l-0 rounded-l-none">
+                  <SelectValue placeholder="Size" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SIZES.map((s) => (
+                    <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <button
+              onClick={() => handleQuickAdjust(1)}
+              disabled={!quickSize || !quickColor}
+              className="p-1 rounded bg-primary text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            >
+              <PlusCircle className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => handleQuickAdjust(-1)}
+              disabled={!quickSize || !quickColor || !(item.variants || []).some(v => v.size === quickSize && v.color === quickColor)}
+              className="p-1 rounded bg-muted text-foreground disabled:opacity-50 hover:bg-muted/90 transition-colors"
+            >
+              <MinusCircle className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
