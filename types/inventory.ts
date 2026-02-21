@@ -19,10 +19,12 @@ export const CLOTH_TYPES = [
   "Skirt and Blouse",
   "Trouser",
   "Gown",
+  "Short Gown",
   "Other",
 ] as const;
 
 export const SIZES = [
+  "36",
   "38",
   "40",
   "42",
