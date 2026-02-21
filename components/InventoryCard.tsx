@@ -102,43 +102,41 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
           )}
         </div>
 
-        {/* Quick Adjust Dropdown */}
+        {/* Quick Adjust */}
         {isAdmin && (
-          <div className="mt-auto pt-3 flex gap-1 items-center">
-            <div className="flex-2 min-w-0">
-              <Input
-                value={quickColor}
-                onChange={(e) => setQuickColor(e.target.value)}
-                placeholder="Color"
-                className="h-7 text-[10px] py-0 bg-muted/30"
-              />
-            </div>
-            <div className="flex-1">
+          <div className="mt-auto pt-3 space-y-1.5">
+            <Input
+              value={quickColor}
+              onChange={(e) => setQuickColor(e.target.value)}
+              placeholder="Color (e.g. Black)"
+              className="h-8 text-xs w-full"
+            />
+            <div className="flex gap-1 items-center">
               <Select value={quickSize} onValueChange={setQuickSize}>
-                <SelectTrigger className="h-7 text-[10px] py-0 border-l-0 rounded-l-none">
+                <SelectTrigger className="h-8 text-xs flex-1">
                   <SelectValue placeholder="Size" />
                 </SelectTrigger>
                 <SelectContent>
                   {SIZES.map((s) => (
-                    <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
+                    <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <button
+                onClick={() => handleQuickAdjust(1)}
+                disabled={!quickSize || !quickColor}
+                className="p-1.5 rounded bg-primary text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
+              >
+                <PlusCircle className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleQuickAdjust(-1)}
+                disabled={!quickSize || !quickColor || !(item.variants || []).some(v => v.size === quickSize && v.color === quickColor)}
+                className="p-1.5 rounded bg-muted text-foreground disabled:opacity-50 hover:bg-muted/90 transition-colors"
+              >
+                <MinusCircle className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              onClick={() => handleQuickAdjust(1)}
-              disabled={!quickSize || !quickColor}
-              className="p-1 rounded bg-primary text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
-            >
-              <PlusCircle className="h-3 w-3" />
-            </button>
-            <button
-              onClick={() => handleQuickAdjust(-1)}
-              disabled={!quickSize || !quickColor || !(item.variants || []).some(v => v.size === quickSize && v.color === quickColor)}
-              className="p-1 rounded bg-muted text-foreground disabled:opacity-50 hover:bg-muted/90 transition-colors"
-            >
-              <MinusCircle className="h-3 w-3" />
-            </button>
           </div>
         )}
       </div>
