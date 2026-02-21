@@ -6,11 +6,13 @@ import { AddItemDialog } from "@/components/AddItemDialog";
 import { InventoryCard } from "@/components/InventoryCard";
 import { StatsBar } from "@/components/StatsBar";
 import { useInventory } from "@/hooks/useInventory";
-import { CLOTH_TYPES, SIZES, type InventoryItem } from "@/types/inventory";
+import { type InventoryItem } from "@/types/inventory";
 import { useAuth } from "@/context/AuthContext";
 import { LoginPage } from "@/components/LoginPage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { SettingsDialog } from "@/components/SettingsDialog";
+import { useSettings } from "@/hooks/useSettings";
 
 function InventoryContent() {
   const { user, role, logout } = useAuth();
@@ -36,6 +38,7 @@ function InventoryContent() {
   } = useInventory();
 
   const isAdmin = role === "admin";
+  const { clothTypes, sizes } = useSettings();
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,13 +54,8 @@ function InventoryContent() {
             </Badge>
           </div>
           
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex flex-col items-end mr-2">
-              <span className="text-xs font-bold leading-none">{user}</span>
-              <button onClick={logout} className="text-[10px] text-muted-foreground hover:text-primary transition-colors">
-                Sign Out
-              </button>
-            </div>
+          <div className="flex items-center gap-2">
+            {isAdmin && <SettingsDialog />}
             {isAdmin && <AddItemDialog onAdd={addItem} />}
           </div>
         </div>
@@ -84,7 +82,7 @@ function InventoryContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              {CLOTH_TYPES.map((t) => (
+              {clothTypes.map((t) => (
                 <SelectItem key={t} value={t}>{t}</SelectItem>
               ))}
             </SelectContent>
@@ -105,7 +103,7 @@ function InventoryContent() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Sizes</SelectItem>
-              {SIZES.map((s) => (
+              {sizes.map((s) => (
                 <SelectItem key={s} value={s}>{s}</SelectItem>
               ))}
             </SelectContent>

@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Camera, X, ImagePlus } from "lucide-react";
-import { CLOTH_TYPES, SIZES } from "@/types/inventory";
+import { Plus, Camera, X } from "lucide-react";
 import type { StockVariant, InventoryItem } from "@/types/inventory";
+import { useSettings } from "@/hooks/useSettings";
 
 interface AddItemDialogProps {
   onAdd?: (item: Omit<InventoryItem, "id" | "createdAt" | "quantity">) => void;
@@ -17,6 +17,7 @@ interface AddItemDialogProps {
 }
 
 export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItemDialogProps) {
+  const { clothTypes, sizes } = useSettings();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initialData?.name || "");
   const [type, setType] = useState(initialData?.type || "");
@@ -77,7 +78,7 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
 
   const addVariantRow = () => {
     const usedSizes = variants.map((s) => s.size);
-    const nextSize = SIZES.find((s) => !usedSizes.includes(s)) || "38";
+    const nextSize = sizes.find((s) => !usedSizes.includes(s)) || sizes[0] || "38";
     setVariants([...variants, { size: nextSize, color: "Black", quantity: 1 }]);
   };
 
@@ -195,7 +196,7 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                {CLOTH_TYPES.map((t) => (
+                {clothTypes.map((t) => (
                   <SelectItem key={t} value={t}>{t}</SelectItem>
                 ))}
               </SelectContent>
@@ -244,7 +245,7 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {SIZES.map((s) => (
+                          {sizes.map((s) => (
                             <SelectItem key={s} value={s}>{s}</SelectItem>
                           ))}
                         </SelectContent>

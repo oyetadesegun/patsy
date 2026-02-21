@@ -1,14 +1,14 @@
 "use client"
 import type { InventoryItem } from "@/types/inventory";
-import { Trash2, Edit2, PlusCircle, MinusCircle, ExternalLink } from "lucide-react";
+import { Trash2, Edit2, PlusCircle, MinusCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AddItemDialog } from "./AddItemDialog";
 import { useState } from "react";
-import { SIZES } from "@/types/inventory";
 import { useAuth } from "@/context/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Input } from "./ui/input";
+import { useSettings } from "@/hooks/useSettings";
 
 interface InventoryCardProps {
   item: InventoryItem;
@@ -24,6 +24,8 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
   const [quickSize, setQuickSize] = useState("");
   const [quickColor, setQuickColor] = useState("Black");
   const [imageLoaded, setImageLoaded] = useState(false);
+  const router = useRouter();
+  const { sizes } = useSettings();
 
   const totalQty = (item.variants || []).reduce((sum, v) => sum + (v.quantity > 0 ? v.quantity : 0), 0);
   const activeVariants = (item.variants || []).filter(v => v.quantity > 0);
@@ -31,11 +33,17 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
   const handleQuickAdjust = (delta: number) => {
     if (!quickSize || !quickColor) return;
     onAdjust(item.id, quickSize, quickColor, delta);
-    // Reset after adding to prevent accidental duplicates
     if (delta > 0) {
       setQuickSize("");
       setQuickColor("Black");
     }
+  };
+
+  const handleImageClick = (e: React.MouseEvent | React.TouchEvent) => {
+    // Don't navigate if tapping on admin buttons
+    const target = e.target as HTMLElement;
+    if (target.closest("button")) return;
+    router.push(`/inventory/${item.id}`);
   };
 
   return (
@@ -43,7 +51,14 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
       className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300 animate-fade-in flex flex-col"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="relative aspect-3/4 overflow-hidden shrink-0 bg-muted">
+      {/* Tappable image — full area navigates to detail page on mobile */}
+      <div
+        className="relative aspect-3/4 overflow-hidden shrink-0 bg-muted cursor-pointer active:opacity-80 transition-opacity"
+        onClick={handleImageClick}
+        onTouchEnd={handleImageClick}
+        role="link"
+        aria-label={`View ${item.name} details`}
+      >
         {/* Skeleton spinner while image loads */}
         {!imageLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
@@ -57,41 +72,41 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
           className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
         />
         <div className="absolute inset-0 bg-linear-to-t from-foreground/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute top-2 right-2 flex gap-2">
-          {isAdmin && (
-            <>
-              <AddItemDialog
-                initialData={item}
-                onUpdate={onUpdate}
-                trigger={
-                  <button className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
-                    <Edit2 className="h-3.5 w-3.5 text-foreground" />
-                  </button>
-                }
-              />
-              <button
-                onClick={() => onDelete(item.id)}
-                className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
-              >
-                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-              </button>
-            </>
-          )}
-        </div>
+
+        {/* Admin action buttons — stop propagation so they don't trigger nav */}
+        {isAdmin && (
+          <div className="absolute top-2 right-2 flex gap-2">
+            <AddItemDialog
+              initialData={item}
+              onUpdate={onUpdate}
+              trigger={
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-white"
+                >
+                  <Edit2 className="h-3.5 w-3.5 text-foreground" />
+                </button>
+              }
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
+              className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </button>
+          </div>
+        )}
+
         <div className="absolute bottom-2 left-2">
           <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm text-foreground text-xs font-body">
             {item.type}
           </Badge>
         </div>
       </div>
+
       <div className="p-3.5 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-1">
-          <Link href={`/inventory/${item.id}`} className="hover:text-primary transition-colors flex-1 min-w-0">
-            <h3 className="font-display text-sm font-semibold leading-tight truncate">{item.name}</h3>
-          </Link>
-          <Link href={`/inventory/${item.id}`} className="text-muted-foreground hover:text-primary transition-colors">
-            <ExternalLink className="h-3 w-3" />
-          </Link>
+          <h3 className="font-display text-sm font-semibold leading-tight truncate flex-1">{item.name}</h3>
         </div>
         <p className="text-xs text-muted-foreground mt-1 font-body">{totalQty} total pieces</p>
 
@@ -130,7 +145,7 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
                   <SelectValue placeholder="Size" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SIZES.map((s) => (
+                  {sizes.map((s) => (
                     <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                   ))}
                 </SelectContent>
