@@ -213,38 +213,55 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
                 + Add row
               </button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {variants.map((entry, i) => (
-                <div key={i} className="flex gap-2 items-center">
-                  <Input
-                    value={entry.color}
-                    onChange={(e) => updateVariant(i, "color", e.target.value)}
-                    className="w-24"
-                    placeholder="Color"
-                  />
-                  <Select value={entry.size} onValueChange={(v) => updateVariant(i, "size", v)}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SIZES.map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={entry.quantity}
-                    onChange={(e) => updateVariant(i, "quantity", parseInt(e.target.value) || 0)}
-                    className="flex-1"
-                    placeholder="Qty"
-                  />
+                <div key={i} className="border border-border rounded-xl p-3 bg-muted/20 space-y-2 relative">
                   {variants.length > 1 && (
-                    <button onClick={() => removeVariantRow(i)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <button
+                      onClick={() => removeVariantRow(i)}
+                      className="absolute top-2 right-2 text-muted-foreground hover:text-destructive transition-colors"
+                    >
                       <X className="h-4 w-4" />
                     </button>
                   )}
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pr-6">
+                    Variant {i + 1}
+                  </p>
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Color</Label>
+                    <Input
+                      value={entry.color}
+                      onChange={(e) => updateVariant(i, "color", e.target.value)}
+                      placeholder="e.g. Black, Red, Navy..."
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Size</Label>
+                      <Select value={entry.size} onValueChange={(v) => updateVariant(i, "size", v)}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SIZES.map((s) => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Quantity</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={entry.quantity}
+                        onChange={(e) => updateVariant(i, "quantity", parseInt(e.target.value) || 0)}
+                        placeholder="Qty"
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

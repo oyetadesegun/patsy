@@ -16,7 +16,11 @@ export async function POST(req: Request) {
       quantity: totalQuantity,
     },
   });
-  return NextResponse.json(item);
+  return NextResponse.json({
+    ...item,
+    variants: (item.sizes as any) || [],
+    sizes: undefined,
+  });
 }
 
 export async function GET() {
@@ -48,7 +52,11 @@ export async function PUT(req: Request) {
       quantity: totalQuantity,
     },
   });
-  return NextResponse.json(item);
+  return NextResponse.json({
+    ...item,
+    variants: (item.sizes as any) || [],
+    sizes: undefined,
+  });
 }
 export async function DELETE(req: Request) {
   const { id } = await req.json();
