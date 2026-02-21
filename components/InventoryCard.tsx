@@ -1,6 +1,6 @@
 "use client"
 import type { InventoryItem } from "@/types/inventory";
-import { Trash2, Edit2, PlusCircle, MinusCircle, Search, ExternalLink } from "lucide-react";
+import { Trash2, Edit2, PlusCircle, MinusCircle, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AddItemDialog } from "./AddItemDialog";
 import { useState } from "react";
@@ -23,13 +23,19 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
   const isAdmin = role === "admin";
   const [quickSize, setQuickSize] = useState("");
   const [quickColor, setQuickColor] = useState("Black");
-  
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   const totalQty = (item.variants || []).reduce((sum, v) => sum + (v.quantity > 0 ? v.quantity : 0), 0);
   const activeVariants = (item.variants || []).filter(v => v.quantity > 0);
 
   const handleQuickAdjust = (delta: number) => {
     if (!quickSize || !quickColor) return;
     onAdjust(item.id, quickSize, quickColor, delta);
+    // Reset after adding to prevent accidental duplicates
+    if (delta > 0) {
+      setQuickSize("");
+      setQuickColor("Black");
+    }
   };
 
   return (
@@ -37,18 +43,25 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
       className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300 animate-fade-in flex flex-col"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <div className="relative aspect-3/4 overflow-hidden shrink-0">
+      <div className="relative aspect-3/4 overflow-hidden shrink-0 bg-muted">
+        {/* Skeleton spinner while image loads */}
+        {!imageLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-muted-foreground/20 border-t-primary/60" />
+          </div>
+        )}
         <img
           src={item.imageUrl}
           alt={item.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onLoad={() => setImageLoaded(true)}
+          className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
         />
         <div className="absolute inset-0 bg-linear-to-t from-foreground/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <div className="absolute top-2 right-2 flex gap-2">
           {isAdmin && (
             <>
-              <AddItemDialog 
-                initialData={item} 
+              <AddItemDialog
+                initialData={item}
                 onUpdate={onUpdate}
                 trigger={
                   <button className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
@@ -81,7 +94,7 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
           </Link>
         </div>
         <p className="text-xs text-muted-foreground mt-1 font-body">{totalQty} total pieces</p>
-        
+
         {/* Active Variants Badge Cloud */}
         <div className="flex flex-wrap gap-1 mt-2.5">
           {activeVariants.slice(0, 4).map((v) => (

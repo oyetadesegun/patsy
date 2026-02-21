@@ -17,6 +17,8 @@ export function useInventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [filterColor, setFilterColor] = useState("");
+  const [filterSize, setFilterSize] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchItems = async () => {
@@ -102,13 +104,26 @@ export function useInventory() {
     await updateItem(itemId, { variants: newVariants });
   };
 
-  const filteredItems = items.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.type.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || item.type === filterType;
-    return matchesSearch && matchesType;
-  });
+  const sortByName = (arr: InventoryItem[]) =>
+    [...arr].sort((a, b) => a.name.localeCompare(b.name));
+
+  const filteredItems = sortByName(
+    items.filter((item) => {
+      const matchesSearch =
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = filterType === "all" || item.type === filterType;
+      const matchesColor =
+        !filterColor ||
+        (item.variants || []).some((v) =>
+          v.color.toLowerCase().includes(filterColor.toLowerCase())
+        );
+      const matchesSize =
+        filterSize === "all" ||
+        (item.variants || []).some((v) => v.size === filterSize);
+      return matchesSearch && matchesType && matchesColor && matchesSize;
+    })
+  );
 
   const totalItems = items.reduce(
     (sum, item) => sum + (item.variants || []).reduce((s, v) => s + (v.quantity > 0 ? v.quantity : 0), 0),
@@ -131,6 +146,10 @@ export function useInventory() {
     setSearchQuery,
     filterType,
     setFilterType,
+    filterColor,
+    setFilterColor,
+    filterSize,
+    setFilterSize,
     addItem,
     deleteItem,
     updateItem,

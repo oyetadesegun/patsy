@@ -8,21 +8,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { AddItemDialog } from "@/components/AddItemDialog";
+import { useState } from "react";
 
 import { LoginPage } from "@/components/LoginPage";
 
 export default function ItemDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { allItems, adjustVariantQuantity, updateItem, deleteItem } = useInventory();
+  const { allItems, adjustVariantQuantity, updateItem, deleteItem, isLoading } = useInventory();
   const { role, isAuthenticated } = useAuth();
   const isAdmin = role === "admin";
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   if (!isAuthenticated) {
     return <LoginPage />;
   }
 
   const item = allItems.find((i) => i.id === id);
+
+  if (isLoading && !item) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-muted border-t-primary" />
+        <p className="text-sm text-muted-foreground font-body">Loading item…</p>
+      </div>
+    );
+  }
 
   if (!item) {
     return (
@@ -75,11 +86,17 @@ export default function ItemDetailPage() {
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8 items-start">
           {/* Item Image */}
-          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm aspect-3/4">
-            <img 
-              src={item.imageUrl} 
-              alt={item.name} 
-              className="w-full h-full object-cover"
+          <div className="rounded-2xl border border-border overflow-hidden shadow-sm aspect-3/4 relative bg-muted">
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-muted-foreground/20 border-t-primary/60" />
+              </div>
+            )}
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              onLoad={() => setImageLoaded(true)}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
             />
           </div>
 
