@@ -14,12 +14,15 @@ export interface StockVariant {
 }
 
 export const CLOTH_TYPES = [
+  "Gown",
   "Suit",
   "Top",
+  "Skirt",
+  "Blouse",
   "Skirt and Blouse",
   "Trouser",
-  "Gown",
   "Short Gown",
+  "Jump suit",
   "Other",
 ] as const;
 
