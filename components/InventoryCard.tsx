@@ -55,7 +55,7 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
       <div
         className="relative aspect-3/4 overflow-hidden shrink-0 bg-muted cursor-pointer active:opacity-80 transition-opacity"
         onClick={handleImageClick}
-        onTouchEnd={handleImageClick}
+        // onTouchEnd={handleImageClick}
         role="link"
         aria-label={`View ${item.name} details`}
       >
@@ -88,12 +88,6 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
                 </button>
               }
             />
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(item.id); }}
-              className="bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
-            >
-              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-            </button>
           </div>
         )}
 
