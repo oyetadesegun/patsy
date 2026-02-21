@@ -40,6 +40,7 @@ export function useInventory() {
     try {
       const response = await fetch("/api/inventory", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(item),
       });
       const newItem = await response.json();
@@ -53,6 +54,7 @@ export function useInventory() {
     try {
       await fetch("/api/inventory", {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
       setItems((prev) => prev.filter((item) => item.id !== id));
@@ -68,6 +70,7 @@ export function useInventory() {
 
       const response = await fetch("/api/inventory", {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...currentItem, ...updates }),
       });
       const updatedItem = await response.json();
