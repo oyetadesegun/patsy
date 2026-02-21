@@ -105,7 +105,7 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
         {/* Quick Adjust Dropdown */}
         {isAdmin && (
           <div className="mt-auto pt-3 flex gap-1 items-center">
-            <div className="flex-[2] min-w-0">
+            <div className="flex-2 min-w-0">
               <Input
                 value={quickColor}
                 onChange={(e) => setQuickColor(e.target.value)}

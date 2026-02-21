@@ -18,6 +18,8 @@ const Index = () => {
     setFilterType,
     addItem,
     deleteItem,
+    updateItem,
+    adjustVariantQuantity,
     totalItems,
   } = useInventory();
 
@@ -66,7 +68,14 @@ const Index = () => {
         {items.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {items.map((item, i) => (
-              <InventoryCard key={item.id} item={item} onDelete={deleteItem} index={i} />
+              <InventoryCard 
+                key={item.id} 
+                item={item} 
+                onDelete={deleteItem} 
+                onUpdate={updateItem}
+                onAdjust={adjustVariantQuantity}
+                index={i} 
+              />
             ))}
           </div>
         ) : (

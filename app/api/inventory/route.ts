@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 export async function GET() {
   const items = await prisma.inventoryItem.findMany();
   // Map 'sizes' DB field to 'variants' for the frontend
-  const mappedItems = items.map((item) => ({
+  const mappedItems = items.map((item: any) => ({
     ...item,
     variants: (item.sizes as any) || [],
     sizes: undefined,
