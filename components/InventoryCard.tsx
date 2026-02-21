@@ -1,3 +1,4 @@
+"use client"
 import type { InventoryItem } from "@/types/inventory";
 import { Trash2, Edit2, PlusCircle, MinusCircle, Search, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

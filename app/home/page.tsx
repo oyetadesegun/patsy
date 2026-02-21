@@ -1,12 +1,12 @@
-import { Search } from "lucide-react";
+"use client"
+import { Search, PackageOpen, Plus, Trash2, Edit2, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddItemDialog } from "@/components/AddItemDialog";
 import { InventoryCard } from "@/components/InventoryCard";
-// import { StatsBar } from "@/components/StatsBar";
+import { StatsBar } from "@/components/StatsBar";
 import { useInventory } from "@/hooks/useInventory";
 import { CLOTH_TYPES } from "@/types/inventory";
-import { StatsBar } from "@/components/Statsbar";
 
 const Index = () => {
   const {
