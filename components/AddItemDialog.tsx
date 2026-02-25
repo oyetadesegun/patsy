@@ -103,7 +103,7 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
       setName("");
       setType("");
       setImageUrl("");
-      setVariants([{ size: "38", color: "Black", quantity: 1 }]);
+      setVariants([{ size: "38", color: "", quantity: 1 }]);
     }
     setOpen(false);
   };
