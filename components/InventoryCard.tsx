@@ -22,7 +22,7 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
   const { role } = useAuth();
   const isAdmin = role === "admin";
   const [quickSize, setQuickSize] = useState("");
-  const [quickColor, setQuickColor] = useState("Black");
+  const [quickColor, setQuickColor] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
   const router = useRouter();
   const { sizes } = useSettings();
