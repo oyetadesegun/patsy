@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Role = "admin" | "viewer" | null;
+type Role = "admin" | "staff" | "viewer" | null;
 
 interface AuthContextType {
   user: string | null;
@@ -40,9 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (username === "patsy") {
       setUser("Patsy");
-      setRole("viewer");
+      setRole("staff");
       localStorage.setItem("auth_user", "Patsy");
-      localStorage.setItem("auth_role", "viewer");
+      localStorage.setItem("auth_role", "staff");
       return true;
     }
 

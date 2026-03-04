@@ -21,6 +21,7 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initialData?.name || "");
   const [type, setType] = useState(initialData?.type || "");
+  const [price, setPrice] = useState(initialData?.price || 0);
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
   const [variants, setVariants] = useState<StockVariant[]>(initialData?.variants || [{ size: "38", color: "Black", quantity: 1 }]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,14 +95,15 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
     if (!name || !type || !imageUrl) return;
     
     if (initialData && onUpdate) {
-      onUpdate(initialData.id, { name, type, imageUrl, variants });
+      onUpdate(initialData.id, { name, type, imageUrl, variants, price });
     } else if (onAdd) {
-      onAdd({ name, type, imageUrl, variants });
+      onAdd({ name, type, imageUrl, variants, price });
     }
 
     if (!initialData) {
       setName("");
       setType("");
+      setPrice(0);
       setImageUrl("");
       setVariants([{ size: "38", color: "", quantity: 1 }]);
     }
@@ -201,6 +203,19 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Price */}
+          <div>
+            <Label htmlFor="price" className="text-sm font-medium text-muted-foreground">Price (₦)</Label>
+            <Input
+              id="price"
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(parseInt(e.target.value) || 0)}
+              placeholder="e.g. 5000"
+              className="mt-1.5"
+            />
           </div>
 
           {/* Variants (Size & Color) */}

@@ -106,9 +106,9 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
 
         {/* Active Variants Badge Cloud */}
         <div className="flex flex-wrap gap-1 mt-2.5">
-          {activeVariants.slice(0, 4).map((v) => (
+          {activeVariants.slice(0, 4).map((v, vi) => (
             <div
-              key={`${v.size}-${v.color}`}
+              key={`${vi}-${v.size}-${v.color}`}
               className="inline-flex items-center text-[9px] font-medium font-body bg-muted text-muted-foreground rounded px-1.5 py-0.5 gap-1"
             >
               <span className="text-foreground font-bold">{v.size}</span>

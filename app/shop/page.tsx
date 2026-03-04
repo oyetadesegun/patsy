@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
-import { ShoppingBag, Plus, Minus, X } from "lucide-react";
+import { ShoppingBag, ArrowLeft, Plus, Minus, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInventory } from "@/hooks/useInventory";
+import { CLOTH_TYPES } from "@/types/inventory";
 import { formatNaira } from "@/lib/format";
-import { useAuth } from "@/context/AuthContext";
 import type { InventoryItem } from "@/types/inventory";
 
 interface ShopCartItem {
@@ -22,24 +22,11 @@ interface ShopCartItem {
   price: number;
 }
 
-export default function ShopPage() {
-  const { role, isAuthenticated } = useAuth();
-  const router = useRouter();
-  const { items, searchQuery, setSearchQuery, filterType, setFilterType,
-          filterColor, setFilterColor, filterSize, setFilterSize, isLoading } = useInventory();
+const Shop = () => {
+  const { items, searchQuery, setSearchQuery, filterType, setFilterType } = useInventory();
   const [cart, setCart] = useState<ShopCartItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
-
-  // Redirect staff/admin to their work pages — the shop is for customers only
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (role === "admin") router.replace("/inventory");
-    else if (role === "staff") router.replace("/pos");
-  }, [isAuthenticated, role, router]);
-
-  // Don't render the shop UI while redirect is pending
-  if (isAuthenticated && (role === "admin" || role === "staff")) return null;
 
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0);
   const cartTotal = cart.reduce((s, c) => s + c.price * c.quantity, 0);
@@ -68,90 +55,56 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Page heading */}
-        <div>
-          <h2 className="text-2xl font-display font-bold tracking-tight">Collection</h2>
-          <p className="text-sm text-muted-foreground font-body mt-0.5">Browse our latest arrivals</p>
-        </div>
-
-        {/* Bag button (floating) */}
-        {cartCount > 0 && (
-          <button
-            onClick={() => setCartOpen(true)}
-            className="fixed bottom-6 right-6 z-30 bg-primary text-primary-foreground rounded-full shadow-elevated flex items-center gap-2 px-4 py-3 font-body text-sm font-semibold hover:bg-primary/90 transition-colors"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            Bag · {cartCount}
-            <span className="font-normal opacity-80">{formatNaira(cartTotal)}</span>
-          </button>
-        )}
-
-        {/* Filters */}
-        <div className="space-y-2">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              placeholder="Search by name…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 font-body"
-            />
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full sm:w-44 font-body">
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {(["Gown","Suit","Top","Skirt","Blouse","Skirt and Blouse","Trouser","Short Gown","Jump suit","Other"] as const).map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Input
-              placeholder="Filter by colour (e.g. Red, Black…)"
-              value={filterColor}
-              onChange={(e) => setFilterColor(e.target.value)}
-              className="flex-1 font-body"
-            />
-            <Select value={filterSize} onValueChange={setFilterSize}>
-              <SelectTrigger className="w-full sm:w-44 font-body">
-                <SelectValue placeholder="All sizes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sizes</SelectItem>
-                {(["XS","S","M","L","XL","2XL","3XL","4XL","Free Size","6","8","10","12","14","16","18","20"] as const).map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Active filter chips */}
-          {(filterColor || filterSize !== "all" || filterType !== "all" || searchQuery) && (
-            <div className="flex flex-wrap gap-1.5 items-center">
-              <span className="text-[10px] text-muted-foreground font-body">Active:</span>
-              {searchQuery && <span className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-body">&quot;{searchQuery}&quot;</span>}
-              {filterType !== "all" && <span className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-body">{filterType}</span>}
-              {filterColor && <span className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-body">Color: {filterColor}</span>}
-              {filterSize !== "all" && <span className="text-[10px] bg-primary/10 text-primary rounded-full px-2 py-0.5 font-body">Size: {filterSize}</span>}
-              <button
-                onClick={() => { setSearchQuery(""); setFilterType("all"); setFilterColor(""); setFilterSize("all"); }}
-                className="text-[10px] text-destructive hover:underline font-body ml-1"
-              >
-                Clear all
-              </button>
+      {/* Header */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/" passHref>
+              <Button variant="ghost" size="icon" asChild>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-display font-bold tracking-tight">Shop</h1>
+              <p className="text-xs text-muted-foreground font-body mt-0.5">Browse our collection</p>
             </div>
-          )}
+          </div>
+          <Button variant="outline" className="relative gap-2 font-body" onClick={() => setCartOpen(true)}>
+            <ShoppingBag className="h-4 w-4" />
+            Bag
+            {cartCount > 0 && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                {cartCount}
+              </Badge>
+            )}
+          </Button>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Input
+            placeholder="Search collection..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 font-body"
+          />
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-full sm:w-44 font-body">
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {CLOTH_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Product Grid */}
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-muted border-t-primary" />
-            <p className="text-sm text-muted-foreground font-body">Loading collection…</p>
-          </div>
-        ) : availableItems.length > 0 ? (
+        {availableItems.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {availableItems.map((item) => {
               const totalQty = item.variants.reduce((s, v) => s + v.quantity, 0);
@@ -161,7 +114,7 @@ export default function ShopPage() {
                   className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300 cursor-pointer"
                   onClick={() => setSelectedItem(item)}
                 >
-                  <div className="relative aspect-3/4 overflow-hidden">
+                  <div className="relative aspect-[3/4] overflow-hidden">
                     <Image
                       src={item.imageUrl}
                       alt={item.name}
@@ -195,12 +148,12 @@ export default function ShopPage() {
 
       {/* Product Detail Modal */}
       {selectedItem && (
-        <div
-          className="fixed inset-0 z-30 bg-foreground/50 backdrop-blur-sm flex items-end sm:items-center justify-center"
+        <div 
+          className="fixed inset-0 z-30 bg-foreground/50 backdrop-blur-sm flex items-end sm:items-center justify-center" 
           onClick={() => setSelectedItem(null)}
         >
-          <div
-            className="bg-card w-full sm:max-w-lg sm:rounded-xl overflow-hidden max-h-[85vh] overflow-y-auto"
+          <div 
+            className="bg-card w-full sm:max-w-lg sm:rounded-lg overflow-hidden max-h-[85vh] overflow-y-auto" 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative aspect-square">
@@ -211,8 +164,8 @@ export default function ShopPage() {
                 className="object-cover"
                 sizes="(max-width: 640px) 100vw, 500px"
               />
-              <button
-                onClick={() => setSelectedItem(null)}
+              <button 
+                onClick={() => setSelectedItem(null)} 
                 className="absolute top-3 right-3 bg-background/80 backdrop-blur-sm rounded-full p-2"
               >
                 <X className="h-4 w-4" />
@@ -229,7 +182,7 @@ export default function ShopPage() {
                 <div className="flex flex-wrap gap-2">
                   {selectedItem.variants.filter((v) => v.quantity > 0).map((v) => (
                     <Button
-                      key={`${v.size}-${v.color}`}
+                      key={v.size}
                       variant="outline"
                       size="sm"
                       className="font-body text-xs"
@@ -251,12 +204,12 @@ export default function ShopPage() {
 
       {/* Cart Drawer */}
       {cartOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-foreground/50 backdrop-blur-sm flex justify-end"
+        <div 
+          className="fixed inset-0 z-40 bg-foreground/50 backdrop-blur-sm flex justify-end" 
           onClick={() => setCartOpen(false)}
         >
-          <div
-            className="bg-card w-full max-w-sm h-full overflow-y-auto shadow-xl"
+          <div 
+            className="bg-card w-full max-w-sm h-full overflow-y-auto shadow-xl" 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-5 border-b border-border flex items-center justify-between">
@@ -275,7 +228,7 @@ export default function ShopPage() {
                 <div className="p-4 space-y-3">
                   {cart.map((c) => (
                     <div key={`${c.itemId}-${c.size}`} className="flex gap-3 items-center">
-                      <div className="relative h-16 w-12 shrink-0">
+                      <div className="relative h-16 w-12 flex-shrink-0">
                         <Image
                           src={c.imageUrl}
                           alt={c.name}
@@ -290,15 +243,15 @@ export default function ShopPage() {
                         <p className="text-xs font-semibold text-primary font-body">{formatNaira(c.price)}</p>
                       </div>
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => updateCartQty(c.itemId, c.size, -1)}
+                        <button 
+                          onClick={() => updateCartQty(c.itemId, c.size, -1)} 
                           className="h-7 w-7 rounded border border-border flex items-center justify-center"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
                         <span className="text-sm font-body w-6 text-center">{c.quantity}</span>
-                        <button
-                          onClick={() => updateCartQty(c.itemId, c.size, 1)}
+                        <button 
+                          onClick={() => updateCartQty(c.itemId, c.size, 1)} 
                           className="h-7 w-7 rounded border border-border flex items-center justify-center"
                         >
                           <Plus className="h-3 w-3" />
@@ -312,9 +265,10 @@ export default function ShopPage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-semibold">{formatNaira(cartTotal)}</span>
                   </div>
-                  <Button className="w-full font-body" disabled>
-                    Checkout — coming soon
+                  <Button className="w-full gap-2 font-body" disabled>
+                    Checkout <ChevronRight className="h-4 w-4" />
                   </Button>
+                  <p className="text-[10px] text-center text-muted-foreground font-body">Checkout coming soon</p>
                 </div>
               </>
             )}
@@ -323,4 +277,6 @@ export default function ShopPage() {
       )}
     </div>
   );
-}
+};
+
+export default Shop;

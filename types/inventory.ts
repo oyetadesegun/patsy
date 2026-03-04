@@ -3,8 +3,37 @@ export interface InventoryItem {
   name: string;
   type: string;
   imageUrl: string;
+  price: number;
   variants: StockVariant[];
   createdAt: string;
+}
+export interface CartItem {
+  inventoryItemId: string;
+  name: string;
+  imageUrl: string;
+  type: string;
+  size: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number; // percentage 0-100
+}
+
+export interface Sale {
+  id: string;
+  receiptNumber: string;
+  items: CartItem[];
+  subtotal: number;
+  totalDiscount: number;
+  grandTotal: number;
+  amountPaid: number;
+  balance: number;
+  paymentType: "full" | "deposit";
+  depositDeadline?: string; // ISO date
+  customerName: string;
+  customerPhone: string;
+  soldBy: string;
+  createdAt: string;
+  status: "completed" | "pending_balance";
 }
 
 export interface StockVariant {

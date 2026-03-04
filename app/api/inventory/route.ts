@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
-  const { name, type, imageUrl, variants } = await req.json();
+  const { name, type, imageUrl, variants, price } = await req.json();
   const totalQuantity = (variants as { quantity: number }[]).reduce(
     (sum, v) => sum + v.quantity,
     0,
@@ -12,6 +12,7 @@ export async function POST(req: Request) {
       name,
       type,
       imageUrl,
+      price: price || 0,
       sizes: variants, // Store variants in the 'sizes' JSON column
       quantity: totalQuantity,
     },
@@ -35,7 +36,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const { id, name, type, imageUrl, variants } = await req.json();
+  const { id, name, type, imageUrl, variants, price } = await req.json();
   const totalQuantity = (variants as { quantity: number }[]).reduce(
     (sum, v) => sum + v.quantity,
     0,
@@ -48,6 +49,7 @@ export async function PUT(req: Request) {
       name,
       type,
       imageUrl,
+      price: price || 0,
       sizes: variants,
       quantity: totalQuantity,
     },
