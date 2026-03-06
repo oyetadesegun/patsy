@@ -35,7 +35,7 @@ export function InventoryCard({ item, onDelete, onUpdate, onAdjust, index }: Inv
     onAdjust(item.id, quickSize, quickColor, delta);
     if (delta > 0) {
       setQuickSize("");
-      setQuickColor("Black");
+      setQuickColor("");
     }
   };
 

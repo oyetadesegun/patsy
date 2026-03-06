@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Camera, X } from "lucide-react";
+import { Plus, Camera, X, Loader2, CloudOff, CheckCircle2 } from "lucide-react";
 import type { StockVariant, InventoryItem } from "@/types/inventory";
 import { useSettings } from "@/hooks/useSettings";
+import { useUploadQueue } from "@/hooks/useUploadQueue";
+import { useEffect } from "react";
 
 interface AddItemDialogProps {
   onAdd?: (item: Omit<InventoryItem, "id" | "createdAt" | "quantity">) => void;
@@ -23,10 +25,26 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
   const [type, setType] = useState(initialData?.type || "");
   const [price, setPrice] = useState(initialData?.price || 0);
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
-  const [variants, setVariants] = useState<StockVariant[]>(initialData?.variants || [{ size: "38", color: "Black", quantity: 1 }]);
+  const [variants, setVariants] = useState<StockVariant[]>(initialData?.variants || [{ size: "38", color: "", quantity: 1 }]);
+  const [pendingImageId, setPendingImageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isUploading, setIsUploading] = useState(false);
+  const { queue, addToQueue, removeFromQueue } = useUploadQueue();
+
+  // Update imageUrl when offline upload completes
+  useEffect(() => {
+    if (pendingImageId) {
+      const img = queue.find(i => i.id === pendingImageId);
+      if (img?.status === 'completed' && img.url) {
+        setImageUrl(img.url);
+        setPendingImageId(null);
+      }
+    }
+  }, [queue, pendingImageId]);
+
+  const currentPendingImage = pendingImageId ? queue.find(i => i.id === pendingImageId) : null;
+  const isUploading = currentPendingImage?.status === 'uploading' || currentPendingImage?.status === 'pending';
+  const isFailed = currentPendingImage?.status === 'failed';
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -39,48 +57,14 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
     };
     reader.readAsDataURL(file);
 
-    setIsUploading(true);
-
-    try {
-      // Get auth params
-      const authResponse = await fetch('/api/imagekit-auth');
-      if (!authResponse.ok) throw new Error("Failed to get upload authorization");
-      
-      const { signature, token, expire } = await authResponse.json();
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("fileName", `item-${Date.now()}`);
-      formData.append("publicKey", process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || "");
-      formData.append("signature", signature);
-      formData.append("expire", expire.toString());
-      formData.append("token", token);
-
-      const response = await fetch(`https://upload.imagekit.io/api/v1/files/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Upload failed");
-      }
-
-      const data = await response.json();
-      setImageUrl(data.url);
-    } catch (error) {
-      console.error("Image upload error:", error);
-      alert("Image upload failed. Please try again.");
-      setImageUrl(""); // Clear preview on failure
-    } finally {
-      setIsUploading(false);
-    }
+    const id = await addToQueue(file);
+    setPendingImageId(id);
   };
 
   const addVariantRow = () => {
     const usedSizes = variants.map((s) => s.size);
     const nextSize = sizes.find((s) => !usedSizes.includes(s)) || sizes[0] || "38";
-    setVariants([...variants, { size: nextSize, color: "Black", quantity: 1 }]);
+    setVariants([...variants, { size: nextSize, color: "", quantity: 1 }]);
   };
 
   const removeVariantRow = (index: number) => {
@@ -136,7 +120,6 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               onChange={handleImageUpload}
               className="hidden"
             />
@@ -148,13 +131,31 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
                   className={`w-full h-48 object-cover rounded-lg border border-border ${isUploading ? 'opacity-50' : 'opacity-100'}`}
                 />
                 {isUploading && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 rounded-lg">
+                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                    <p className="text-[10px] text-white font-medium mt-1">
+                      {currentPendingImage?.status === 'pending' ? 'Offline - Waiting' : 'Uploading...'}
+                    </p>
+                  </div>
+                )}
+                {isFailed && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-destructive/20 rounded-lg">
+                    <CloudOff className="h-8 w-8 text-destructive" />
+                    <p className="text-[10px] text-destructive font-bold mt-1">Upload Failed - Retrying...</p>
+                  </div>
+                )}
+                {!isUploading && !isFailed && pendingImageId && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-green-500/10 rounded-lg">
+                    <CheckCircle2 className="h-8 w-8 text-green-500" />
                   </div>
                 )}
                 {!isUploading && (
                   <button
-                    onClick={() => setImageUrl("")}
+                    onClick={() => {
+                      setImageUrl("");
+                      if (pendingImageId) removeFromQueue(pendingImageId);
+                      setPendingImageId(null);
+                    }}
                     className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="h-4 w-4 text-foreground" />

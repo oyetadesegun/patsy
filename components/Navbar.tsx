@@ -57,6 +57,43 @@ function LoginDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+
+function MobileBottomNav() {
+  const { role } = useAuth();
+  const pathname = usePathname();
+  const isAdmin = role === "admin";
+  const canSell = role === "admin" || role === "staff";
+
+  const navLinks = [
+    { href: "/", label: "Shop", icon: ShoppingBag, always: true },
+    { href: "/pos", label: "Sell", icon: ShoppingCart, show: canSell },
+    { href: "/inventory", label: "Inventory", icon: Package, show: isAdmin },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-t border-border flex sm:hidden items-center justify-around py-2 px-4 pb-safe-offset-2">
+      {navLinks.map(({ href, label, icon: Icon, always, show }) => {
+        if (!always && !show) return null;
+        const active = pathname === href;
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`flex flex-col items-center gap-1 transition-colors px-4 py-1 rounded-xl ${
+              active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <div className={`p-1.5 rounded-lg transition-colors ${active ? "bg-primary/10" : ""}`}>
+              <Icon className="h-5 w-5" />
+            </div>
+            <span className="text-[10px] font-medium font-body">{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function Navbar() {
   const { user, role, logout, isAuthenticated } = useAuth();
   const pathname = usePathname();
@@ -72,69 +109,73 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-md shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-        {/* Brand */}
-        <Link href="/" className="font-display font-bold text-lg tracking-tight text-foreground">
-          Patsy<span className="text-primary">.</span>
-        </Link>
+    <>
+      <nav className="sticky top-0 z-50 border-b border-border bg-white/80 backdrop-blur-md shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          {/* Brand */}
+          <Link href="/" className="font-display font-bold text-lg tracking-tight text-foreground">
+            Patsy<span className="text-primary">.</span>
+          </Link>
 
-        {/* Nav Links */}
-        <div className="flex items-center gap-1">
-          {navLinks.map(({ href, label, icon: Icon, always, show }) => {
-            if (!always && !show) return null;
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium font-body transition-colors ${
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{label}</span>
-              </Link>
-            );
-          })}
-        </div>
+          {/* Desktop Nav Links */}
+          <div className="hidden sm:flex items-center gap-1">
+            {navLinks.map(({ href, label, icon: Icon, always, show }) => {
+              if (!always && !show) return null;
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium font-body transition-colors ${
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+          </div>
 
-        {/* Auth */}
-        <div className="flex items-center gap-2">
-          {isAuthenticated ? (
-            <>
-              <div className="hidden sm:flex items-center gap-2">
-                <User className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-sm font-body text-foreground">{user}</span>
-                <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-bold h-5">
-                  {role}
-                </Badge>
-              </div>
-              <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5 font-body text-xs">
-                <LogOut className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sign out</span>
-              </Button>
-            </>
-          ) : (
-            <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-1.5 font-body text-xs">
-                  <LogIn className="h-3.5 w-3.5" />
-                  Staff Login
+          {/* Auth */}
+          <div className="flex items-center gap-2">
+            {isAuthenticated ? (
+              <>
+                <div className="hidden sm:flex items-center gap-2">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-body text-foreground">{user}</span>
+                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider font-bold h-5">
+                    {role}
+                  </Badge>
+                </div>
+                <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5 font-body text-xs">
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Sign out</span>
+                  <span className="sm:hidden">Exit</span>
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-sm">
-                <DialogHeader>
-                  <DialogTitle className="font-display">Staff Sign In</DialogTitle>
-                </DialogHeader>
-                <LoginDialog onClose={() => setLoginOpen(false)} />
-              </DialogContent>
-            </Dialog>
-          )}
+              </>
+            ) : (
+              <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-1.5 font-body text-xs">
+                    <LogIn className="h-3.5 w-3.5" />
+                    Staff Login
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Staff Sign In</DialogTitle>
+                  </DialogHeader>
+                  <LoginDialog onClose={() => setLoginOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+      <MobileBottomNav />
+    </>
   );
 }

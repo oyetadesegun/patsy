@@ -158,9 +158,9 @@ const POS = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-24 lg:pb-8">
         {/* Product Browser */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-6">
           <div className="space-y-2">
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -220,7 +220,7 @@ const POS = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {items.map((item) => {
               const totalQty = item.variants.reduce((s, v) => s + v.quantity, 0);
               if (totalQty === 0) return null;
@@ -229,26 +229,31 @@ const POS = () => {
                 <button
                   key={item.id}
                   onClick={() => setPickerItem(item)}
-                  className="group bg-card border border-border rounded-xl overflow-hidden shadow-card hover:shadow-elevated hover:border-primary/40 transition-all text-left relative"
+                  className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/40 transition-all text-left relative active:scale-95"
                 >
-                  <div className="aspect-square overflow-hidden relative">
+                  <div className="aspect-[4/5] overflow-hidden relative">
                     <Image
                       src={item.imageUrl}
                       alt={item.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 768px) 50vw, 25vw"
                     />
                     {inCart > 0 && (
-                      <div className="absolute top-1.5 right-1.5 bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center text-[10px] font-bold shadow">
+                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold shadow-lg">
                         {inCart}
                       </div>
                     )}
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-background/80 backdrop-blur-sm rounded-full border border-border/50">
+                      <p className="text-[10px] font-medium text-foreground">{item.type}</p>
+                    </div>
                   </div>
-                  <div className="p-2.5">
-                    <p className="font-display text-xs font-semibold truncate">{item.name}</p>
-                    <p className="text-[10px] text-primary font-semibold font-body mt-0.5">{formatNaira(item.price)}</p>
-                    <p className="text-[10px] text-muted-foreground font-body">{totalQty} in stock · {item.variants.filter(v => v.quantity > 0).length} variants</p>
+                  <div className="p-3">
+                    <p className="font-display text-sm font-semibold truncate">{item.name}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-xs text-primary font-bold font-body">{formatNaira(item.price)}</p>
+                      <p className="text-[10px] text-muted-foreground font-body">{totalQty} left</p>
+                    </div>
                   </div>
                 </button>
               );
@@ -256,8 +261,9 @@ const POS = () => {
           </div>
         </div>
 
-        {/* Cart / Checkout */}
-        <div className="bg-card border border-border rounded-xl p-4 h-fit sticky top-20 space-y-4">
+        {/* Cart / Checkout - Sticky on Desktop, Static but space-aware on Mobile */}
+        <div className="lg:col-span-1">
+          <div className="bg-card border border-border rounded-2xl p-5 lg:sticky lg:top-24 space-y-5 shadow-sm">
           <div className="flex items-center gap-2 border-b border-border pb-3">
             <ShoppingCart className="h-4 w-4 text-primary" />
             <h2 className="font-display font-semibold text-sm">Cart ({cart.length} items)</h2>
