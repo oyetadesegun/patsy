@@ -24,10 +24,14 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json(logs);
-  } catch (error) {
-    console.error("Audit GET error:", error);
+  } catch (error: any) {
+    console.error("Audit GET error details:", {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+    });
     return NextResponse.json(
-      { error: "Failed to fetch audit logs" },
+      { error: "Failed to fetch audit logs", details: error.message },
       { status: 500 },
     );
   }

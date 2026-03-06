@@ -11,7 +11,7 @@ const connectionString = process.env.DATABASE_URL;
 
 const poolConfig = {
   connectionString,
-  max: 5, // Lower max connections for local dev
+  max: 5,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 };
