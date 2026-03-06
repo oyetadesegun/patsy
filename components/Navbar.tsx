@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, ShoppingCart, Package, LogIn, LogOut, User } from "lucide-react";
+import { ShoppingBag, ShoppingCart, Package, LogIn, LogOut, User, ClipboardList } from "lucide-react";
 
 function LoginDialog({ onClose }: { onClose: () => void }) {
   const { login } = useAuth();
@@ -68,6 +68,7 @@ function MobileBottomNav() {
     { href: "/", label: "Shop", icon: ShoppingBag, always: true },
     { href: "/pos", label: "Sell", icon: ShoppingCart, show: canSell },
     { href: "/inventory", label: "Inventory", icon: Package, show: isAdmin },
+    { href: "/admin/audit", label: "Audit", icon: ClipboardList, show: isAdmin },
   ];
 
   return (
@@ -106,6 +107,7 @@ export function Navbar() {
     { href: "/", label: "Shop", icon: ShoppingBag, always: true },
     { href: "/pos", label: "Sell", icon: ShoppingCart, show: canSell },
     { href: "/inventory", label: "Inventory", icon: Package, show: isAdmin },
+    { href: "/admin/audit", label: "Audit", icon: ClipboardList, show: isAdmin },
   ];
 
   return (

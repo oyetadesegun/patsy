@@ -23,3 +23,31 @@ model InventoryItem {
   quantity  Int
   createdAt DateTime @default(now())
 }
+
+model Sale {
+  id              String   @id @default(cuid())
+  receiptNumber   String   @unique
+  customerName    String?
+  customerPhone   String?
+  items           Json     // CartItem[]
+  subtotal        Int
+  totalDiscount   Int
+  grandTotal      Int
+  amountPaid      Int
+  balance         Int
+  paymentType     String   // "full" | "deposit"
+  depositDeadline DateTime?
+  status          String   // "completed" | "pending_balance"
+  soldBy          String?
+  createdAt       DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // ITEM_ADD, ITEM_UPDATE, ITEM_DELETE, SALE_COMPLETE, SALE_UPDATE
+  entityType  String   // "INVENTORY" | "SALE"
+  entityId    String
+  performedBy String?
+  details     Json?    // { before: ..., after: ..., reason: ... }
+  createdAt   DateTime @default(now())
+}

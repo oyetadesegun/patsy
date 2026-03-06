@@ -85,7 +85,7 @@ const POS = () => {
   const totalDiscount = cart.reduce((sum, c) => sum + (c.unitPrice * c.discount / 100) * c.quantity, 0);
   const grandTotal = subtotal - totalDiscount;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
     const paid = paymentType === "full" ? grandTotal : amountPaid;
     const balance = grandTotal - paid;
@@ -93,39 +93,43 @@ const POS = () => {
     const deadline = new Date();
     deadline.setMonth(deadline.getMonth() + 1);
 
-    const sale = addSale({
-      items: cart,
-      subtotal,
-      totalDiscount,
-      grandTotal,
-      amountPaid: paid,
-      balance: Math.max(0, balance),
-      paymentType,
-      depositDeadline: paymentType === "deposit" ? deadline.toISOString() : undefined,
-      customerName,
-      customerPhone,
-      soldBy: staffName,
-      status: paymentType === "full" || balance <= 0 ? "completed" : "pending_balance",
-    });
+    try {
+      const sale = await addSale({
+        items: cart,
+        subtotal,
+        totalDiscount,
+        grandTotal,
+        amountPaid: paid,
+        balance: Math.max(0, balance),
+        paymentType,
+        depositDeadline: paymentType === "deposit" ? deadline.toISOString() : undefined,
+        customerName,
+        customerPhone,
+        soldBy: user || "staff",
+        status: paymentType === "full" || balance <= 0 ? "completed" : "pending_balance",
+      });
 
-    // Deduct inventory
-    cart.forEach((cartItem) => {
-      const inv = allItems.find((i) => i.id === cartItem.inventoryItemId);
-      if (inv) {
-        const updatedVariants = inv.variants.map((v) =>
-          v.size === cartItem.size ? { ...v, quantity: Math.max(0, v.quantity - cartItem.quantity) } : v
-        );
-        updateItem(inv.id, { variants: updatedVariants });
-      }
-    });
+      // Deduct inventory (This currently still happens locally/optimistically)
+      cart.forEach((cartItem) => {
+        const inv = allItems.find((i) => i.id === cartItem.inventoryItemId);
+        if (inv) {
+          const updatedVariants = inv.variants.map((v) =>
+            v.size === cartItem.size ? { ...v, quantity: Math.max(0, v.quantity - cartItem.quantity) } : v
+          );
+          updateItem(inv.id, { variants: updatedVariants });
+        }
+      });
 
-    setCompletedSale(sale);
-    setShowReceipt(true);
-    setCart([]);
-    setCustomerName("");
-    setCustomerPhone("");
-    setAmountPaid(0);
-    setPaymentType("full");
+      setCompletedSale(sale);
+      setShowReceipt(true);
+      setCart([]);
+      setCustomerName("");
+      setCustomerPhone("");
+      setAmountPaid(0);
+      setPaymentType("full");
+    } catch (error) {
+      alert("Failed to complete sale. Please check your connection.");
+    }
   };
 
   const [pickerItem, setPickerItem] = useState<typeof items[0] | null>(null);

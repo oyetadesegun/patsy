@@ -5,21 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Camera, X, Loader2, CloudOff, CheckCircle2 } from "lucide-react";
+import { Plus, Camera, X, Loader2, CloudOff, CheckCircle2, Copy } from "lucide-react";
 import type { StockVariant, InventoryItem } from "@/types/inventory";
 import { useSettings } from "@/hooks/useSettings";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
+import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 
 interface AddItemDialogProps {
-  onAdd?: (item: Omit<InventoryItem, "id" | "createdAt" | "quantity">) => void;
-  onUpdate?: (id: string, updates: Partial<InventoryItem>) => void;
+  onAdd?: (item: Omit<InventoryItem, "id" | "createdAt" | "quantity"> & { performedBy?: string }) => void;
+  onUpdate?: (id: string, updates: Partial<InventoryItem> & { performedBy?: string }) => void;
   initialData?: InventoryItem;
   trigger?: React.ReactNode;
 }
 
 export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItemDialogProps) {
   const { clothTypes, sizes } = useSettings();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initialData?.name || "");
   const [type, setType] = useState(initialData?.type || "");
@@ -71,6 +73,11 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
     if (variants.length > 1) setVariants(variants.filter((_, i) => i !== index));
   };
 
+  const duplicateVariantRow = (index: number) => {
+    const variantToCopy = variants[index];
+    setVariants([...variants, { ...variantToCopy }]);
+  };
+
   const updateVariant = (index: number, field: keyof StockVariant, value: string | number) => {
     setVariants(variants.map((v, i) => (i === index ? { ...v, [field]: value } : v)));
   };
@@ -79,9 +86,9 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
     if (!name || !type || !imageUrl) return;
     
     if (initialData && onUpdate) {
-      onUpdate(initialData.id, { name, type, imageUrl, variants, price });
+      onUpdate(initialData.id, { name, type, imageUrl, variants, price, performedBy: user || "unknown" });
     } else if (onAdd) {
-      onAdd({ name, type, imageUrl, variants, price });
+      onAdd({ name, type, imageUrl, variants, price, performedBy: user || "unknown" });
     }
 
     if (!initialData) {
@@ -241,9 +248,19 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
                       <X className="h-4 w-4" />
                     </button>
                   )}
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pr-6">
-                    Variant {i + 1}
-                  </p>
+                  <div className="flex items-center justify-between pr-6">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Variant {i + 1}
+                    </p>
+                    <button
+                      onClick={() => duplicateVariantRow(i)}
+                      className="text-[10px] text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"
+                      title="Duplicate this row"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Duplicate
+                    </button>
+                  </div>
                   <div>
                     <Label className="text-xs text-muted-foreground mb-1 block">Color</Label>
                     <Input

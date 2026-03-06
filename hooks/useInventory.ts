@@ -1,17 +1,13 @@
-"use client"
-import { useState, useEffect } from "react";
+"use client";
+import { useState, useEffect, useCallback } from "react";
 import type { InventoryItem } from "@/types/inventory";
-
-const STORAGE_KEY = "fashion-inventory";
-
-function loadItems(): InventoryItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
+import {
+  saveOfflineOperation,
+  getOfflineOperations,
+  deleteOfflineOperation,
+  updateOfflineOperation,
+  OfflineOperation,
+} from "@/lib/offline-storage";
 
 export function useInventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -20,6 +16,7 @@ export function useInventory() {
   const [filterColor, setFilterColor] = useState("");
   const [filterSize, setFilterSize] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const fetchItems = async () => {
     setIsLoading(true);
@@ -34,69 +31,181 @@ export function useInventory() {
     }
   };
 
+  const processOfflineQueue = useCallback(async () => {
+    if (isSyncing || !navigator.onLine) return;
+
+    const ops = await getOfflineOperations();
+    const pendingOps = ops.filter(
+      (op) => op.status === "pending" || op.status === "failed",
+    );
+
+    if (pendingOps.length === 0) return;
+
+    setIsSyncing(true);
+    for (const op of pendingOps) {
+      if (!navigator.onLine) break;
+
+      try {
+        await updateOfflineOperation({ ...op, status: "processing" });
+
+        let response;
+        if (op.type === "add") {
+          response = await fetch("/api/inventory", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(op.data),
+          });
+        } else if (op.type === "update") {
+          response = await fetch("/api/inventory", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(op.data),
+          });
+        } else if (op.type === "delete") {
+          response = await fetch("/api/inventory", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: op.itemId }),
+          });
+        }
+
+        if (response?.ok) {
+          await deleteOfflineOperation(op.id);
+        } else {
+          throw new Error("Sync failed");
+        }
+      } catch (error) {
+        console.error("Failed to sync operation:", op.id, error);
+        await updateOfflineOperation({ ...op, status: "failed" });
+      }
+    }
+    setIsSyncing(false);
+    fetchItems(); // Refresh to ensure server state is captured
+  }, [isSyncing]);
+
   useEffect(() => {
     fetchItems();
+    processOfflineQueue();
+
+    const handleOnline = () => processOfflineQueue();
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
   }, []);
 
   const addItem = async (item: Omit<InventoryItem, "id" | "createdAt">) => {
+    const tempId = `temp-${Date.now()}`;
+    const newItem = {
+      ...item,
+      id: tempId,
+      createdAt: new Date().toISOString(),
+    } as InventoryItem;
+
+    // Optimistic update
+    setItems((prev) => [newItem, ...prev]);
+
     try {
       const response = await fetch("/api/inventory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(item),
       });
-      const newItem = await response.json();
-      setItems((prev) => [newItem, ...prev]);
+      const data = await response.json();
+      // Replace temp item with real one
+      setItems((prev) => prev.map((i) => (i.id === tempId ? data : i)));
     } catch (error) {
-      console.error("Failed to add item:", error);
+      console.warn("Offline: Queueing add operation");
+      await saveOfflineOperation({
+        id: tempId,
+        type: "add",
+        data: item,
+        status: "pending",
+        createdAt: Date.now(),
+      });
     }
   };
 
   const deleteItem = async (id: string) => {
+    const originalItems = [...items];
+    // Optimistic update
+    setItems((prev) => prev.filter((item) => item.id !== id));
+
     try {
-      await fetch("/api/inventory", {
+      const response = await fetch("/api/inventory", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      setItems((prev) => prev.filter((item) => item.id !== id));
+      if (!response.ok) throw new Error();
     } catch (error) {
-      console.error("Failed to delete item:", error);
+      console.warn("Offline: Queueing delete operation");
+      await saveOfflineOperation({
+        id: `del-${Date.now()}`,
+        type: "delete",
+        itemId: id,
+        data: { id },
+        status: "pending",
+        createdAt: Date.now(),
+      });
     }
   };
 
   const updateItem = async (id: string, updates: Partial<InventoryItem>) => {
-    try {
-      const currentItem = items.find(i => i.id === id);
-      if (!currentItem) return;
+    const currentItem = items.find((i) => i.id === id);
+    if (!currentItem) return;
 
+    const updatedItem = { ...currentItem, ...updates };
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? updatedItem : item)),
+    );
+
+    try {
       const response = await fetch("/api/inventory", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...currentItem, ...updates }),
+        body: JSON.stringify(updatedItem),
       });
-      const updatedItem = await response.json();
-      setItems((prev) =>
-        prev.map((item) => (item.id === id ? updatedItem : item))
-      );
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+      setItems((prev) => prev.map((item) => (item.id === id ? data : item)));
     } catch (error) {
-      console.error("Failed to update item:", error);
+      console.warn("Offline: Queueing update operation");
+      await saveOfflineOperation({
+        id: `upd-${Date.now()}`,
+        type: "update",
+        itemId: id,
+        data: updatedItem,
+        status: "pending",
+        createdAt: Date.now(),
+      });
     }
   };
 
-  const adjustVariantQuantity = async (itemId: string, sizeLabel: string, colorLabel: string, delta: number) => {
+  const adjustVariantQuantity = async (
+    itemId: string,
+    sizeLabel: string,
+    colorLabel: string,
+    delta: number,
+  ) => {
     const item = items.find((i) => i.id === itemId);
     if (!item) return;
 
-    const variantExists = item.variants.some((v) => v.size === sizeLabel && v.color === colorLabel);
+    const variantExists = item.variants.some(
+      (v) => v.size === sizeLabel && v.color === colorLabel,
+    );
     let newVariants;
 
     if (variantExists) {
       newVariants = item.variants.map((v) =>
-        v.size === sizeLabel && v.color === colorLabel ? { ...v, quantity: Math.max(0, v.quantity + delta) } : v
+        v.size === sizeLabel && v.color === colorLabel
+          ? { ...v, quantity: Math.max(0, v.quantity + delta) }
+          : v,
       );
     } else if (delta > 0) {
-      newVariants = [...item.variants, { size: sizeLabel, color: colorLabel, quantity: delta }];
+      newVariants = [
+        ...item.variants,
+        { size: sizeLabel, color: colorLabel, quantity: delta },
+      ];
     } else {
       return;
     }
@@ -116,25 +225,30 @@ export function useInventory() {
       const matchesColor =
         !filterColor ||
         (item.variants || []).some((v) =>
-          v.color.toLowerCase().includes(filterColor.toLowerCase())
+          v.color.toLowerCase().includes(filterColor.toLowerCase()),
         );
       const matchesSize =
         filterSize === "all" ||
         (item.variants || []).some((v) => v.size === filterSize);
       return matchesSearch && matchesType && matchesColor && matchesSize;
-    })
+    }),
   );
 
   const totalItems = items.reduce(
-    (sum, item) => sum + (item.variants || []).reduce((s, v) => s + (v.quantity > 0 ? v.quantity : 0), 0),
-    0
+    (sum, item) =>
+      sum +
+      (item.variants || []).reduce(
+        (s, v) => s + (v.quantity > 0 ? v.quantity : 0),
+        0,
+      ),
+    0,
   );
 
   const inStockItems = filteredItems.filter((item) =>
-    (item.variants || []).some((v) => v.quantity > 0)
+    (item.variants || []).some((v) => v.quantity > 0),
   );
-  const outOfStockItems = filteredItems.filter((item) =>
-    !(item.variants || []).some((v) => v.quantity > 0)
+  const outOfStockItems = filteredItems.filter(
+    (item) => !(item.variants || []).some((v) => v.quantity > 0),
   );
 
   return {
