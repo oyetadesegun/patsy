@@ -124,3 +124,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes premium-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1.05);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-15%) scale(1);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+.animate-premium-bounce {
+  animation: premium-bounce 2s infinite;
+}

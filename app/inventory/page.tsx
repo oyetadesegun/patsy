@@ -122,12 +122,15 @@ function InventoryContent() {
       </Tabs>
 
       {/* Floating Action Button */}
-      <div className="fixed bottom-20 right-6 sm:bottom-8 sm:right-8 z-50">
+      <div className="fixed bottom-24 right-6 sm:bottom-12 sm:right-12 z-50">
         <AddItemDialog 
           onAdd={addItem} 
           trigger={
-            <Button size="icon" className="h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 transition-all hover:scale-110 active:scale-95 group">
-              <Plus className="h-6 w-6 text-white group-hover:rotate-90 transition-transform duration-300" />
+            <Button 
+              size="icon" 
+              className="h-16 w-16 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] bg-gradient-to-br from-primary via-primary/90 to-black hover:scale-110 active:scale-95 transition-all duration-300 group animate-premium-bounce border-2 border-white/20 backdrop-blur-sm"
+            >
+              <Plus className="h-8 w-8 text-white group-hover:rotate-90 transition-transform duration-500 ease-out" />
             </Button>
           }
         />

@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
+    const url = new URL(req.url, "http://localhost:3000");
+    const { searchParams } = url;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const action = searchParams.get("action");

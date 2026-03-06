@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,47 +6,46 @@ datasource db {
   provider = "postgresql"
 }
 
-
 model InventoryItem {
   id        String   @id @default(cuid())
   name      String
   type      String
   imageUrl  String
   sizes     Json
-  price     Int      @default(0)
   quantity  Int
   createdAt DateTime @default(now())
+  price     Int      @default(0)
 
   @@index([createdAt])
 }
 
 model Sale {
-  id              String   @id @default(cuid())
-  receiptNumber   String   @unique
+  id              String    @id @default(cuid())
+  receiptNumber   String    @unique
   customerName    String?
   customerPhone   String?
-  items           Json     // CartItem[]
+  items           Json
   subtotal        Int
   totalDiscount   Int
   grandTotal      Int
   amountPaid      Int
   balance         Int
-  paymentType     String   // "full" | "deposit"
+  paymentType     String
   depositDeadline DateTime?
-  status          String   // "completed" | "pending_balance"
+  status          String
   soldBy          String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
 
   @@index([createdAt])
 }
 
 model AuditLog {
   id          String   @id @default(cuid())
-  action      String   // ITEM_ADD, ITEM_UPDATE, ITEM_DELETE, SALE_COMPLETE, SALE_UPDATE
-  entityType  String   // "INVENTORY" | "SALE"
+  action      String
+  entityType  String
   entityId    String
   performedBy String?
-  details     Json?    // { before: ..., after: ..., reason: ... }
+  details     Json?
   createdAt   DateTime @default(now())
 
   @@index([createdAt])
