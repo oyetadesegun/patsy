@@ -231,7 +231,7 @@ const POS = () => {
                   onClick={() => setPickerItem(item)}
                   className="group bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-primary/40 transition-all text-left relative active:scale-95"
                 >
-                  <div className="aspect-[4/5] overflow-hidden relative">
+                  <div className="aspect-4/5 overflow-hidden relative">
                     <Image
                       src={item.imageUrl}
                       alt={item.name}
@@ -390,6 +390,7 @@ const POS = () => {
           )}
         </div>
       </div>
+    </div>
 
       {/* Variant Picker Modal */}
       {pickerItem && (
