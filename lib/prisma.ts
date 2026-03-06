@@ -9,11 +9,16 @@ const globalForPrisma = global as unknown as {
 
 const connectionString = process.env.DATABASE_URL;
 
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not set");
+}
+
 const poolConfig = {
   connectionString,
   max: 5,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 15000,
+  ssl: { rejectUnauthorized: false },
 };
 
 if (!globalForPrisma.pool) {
