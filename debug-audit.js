@@ -1,4 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
+const { Pool } = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
 const fs = require('fs');
 const path = require('path');
 
@@ -21,13 +23,17 @@ async function main() {
     return;
   }
 
-  console.log("Connecting using standard Prisma Client...");
+  console.log("Connecting using PG Adapter...");
 
-  const prisma = new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'],
+  const pool = new Pool({ 
+    connectionString,
+    connectionTimeoutMillis: 5000 
   });
-
+  
   try {
+    const adapter = new PrismaPg(pool);
+    const prisma = new PrismaClient({ adapter });
+
     console.log("Fetching audit logs...");
     const logs = await prisma.auditLog.findMany({
       take: 5,
@@ -35,12 +41,15 @@ async function main() {
     });
     console.log("Successfully fetched logs:", logs.length);
     console.log(JSON.stringify(logs, null, 2));
+    
+    await prisma.$disconnect();
   } catch (error) {
     console.error("Prisma Error Message:", error.message);
-    console.error("Prisma Error Code:", error.code);
-    console.error("Full Error Object:", error);
+    if (error.cause) {
+      console.error("Prisma Error Cause:", error.cause);
+    }
   } finally {
-    await prisma.$disconnect();
+    await pool.end();
   }
 }
 
