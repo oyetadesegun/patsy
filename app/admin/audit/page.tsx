@@ -33,7 +33,7 @@ export default function AuditTrailPage() {
         : "/api/audit";
       const response = await fetch(url);
       const data = await response.json();
-      setLogs(data);
+      setLogs(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch logs:", error);
     } finally {
