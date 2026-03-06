@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const sales = await prisma.sale.findMany({
       orderBy: { createdAt: "desc" },
+      take: 50, // Limit to most recent 50 sales for performance
     });
     return NextResponse.json(sales);
   } catch (error) {

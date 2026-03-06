@@ -29,7 +29,7 @@ const POS = () => {
   }, [isAuthenticated, role, router]);
 
   const { items, allItems, searchQuery, setSearchQuery, filterType, setFilterType,
-          filterColor, setFilterColor, filterSize, setFilterSize, updateItem } = useInventory();
+          filterColor, setFilterColor, filterSize, setFilterSize, updateItem, isLoading } = useInventory();
   const { addSale, todaySales, todayRevenue, pendingDeposits } = useSales();
 
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -225,7 +225,17 @@ const POS = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {items.map((item) => {
+            {isLoading ? (
+              <div className="col-span-full py-20 flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary/20 border-t-primary" />
+                <p className="text-xs text-muted-foreground font-body">Loading products...</p>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="col-span-full py-20 text-center border border-dashed rounded-2xl">
+                <ShoppingCart className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground font-body">No products found</p>
+              </div>
+            ) : items.map((item) => {
               const totalQty = item.variants.reduce((s, v) => s + v.quantity, 0);
               if (totalQty === 0) return null;
               const inCart = cart.filter(c => c.inventoryItemId === item.id).reduce((s, c) => s + c.quantity, 0);

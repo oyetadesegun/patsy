@@ -22,9 +22,13 @@ export function useInventory() {
     setIsLoading(true);
     try {
       const response = await fetch("/api/inventory");
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`API Error: ${response.status} - ${text}`);
+      }
       const data = await response.json();
       setItems(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch items:", error);
     } finally {
       setIsLoading(false);
@@ -84,13 +88,17 @@ export function useInventory() {
   }, [isSyncing]);
 
   useEffect(() => {
-    fetchItems();
-    processOfflineQueue();
+    // Single initialization: fetch items then process queue
+    const init = async () => {
+      await fetchItems();
+      await processOfflineQueue();
+    };
+    init();
 
     const handleOnline = () => processOfflineQueue();
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, []);
+  }, [processOfflineQueue]);
 
   const addItem = async (item: Omit<InventoryItem, "id" | "createdAt">) => {
     const tempId = `temp-${Date.now()}`;

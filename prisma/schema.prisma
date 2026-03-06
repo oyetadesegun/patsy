@@ -22,6 +22,8 @@ model InventoryItem {
   price     Int      @default(0)
   quantity  Int
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Sale {
@@ -40,6 +42,8 @@ model Sale {
   status          String   // "completed" | "pending_balance"
   soldBy          String?
   createdAt       DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model AuditLog {
@@ -50,4 +54,6 @@ model AuditLog {
   performedBy String?
   details     Json?    // { before: ..., after: ..., reason: ... }
   createdAt   DateTime @default(now())
+
+  @@index([createdAt])
 }

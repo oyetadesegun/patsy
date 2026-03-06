@@ -11,9 +11,13 @@ export function useSales() {
     setIsLoading(true);
     try {
       const response = await fetch("/api/sales");
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`API Error: ${response.status} - ${text}`);
+      }
       const data = await response.json();
       setSales(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch sales:", error);
     } finally {
       setIsLoading(false);

@@ -23,7 +23,7 @@ interface ShopCartItem {
 }
 
 const Shop = () => {
-  const { items, searchQuery, setSearchQuery, filterType, setFilterType } = useInventory();
+  const { items, searchQuery, setSearchQuery, filterType, setFilterType, isLoading } = useInventory();
   const [cart, setCart] = useState<ShopCartItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -104,7 +104,12 @@ const Shop = () => {
         </div>
 
         {/* Product Grid */}
-        {availableItems.length > 0 ? (
+        {isLoading ? (
+          <div className="py-20 flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary/20 border-t-primary" />
+            <p className="text-xs text-muted-foreground font-body">Loading products...</p>
+          </div>
+        ) : availableItems.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {availableItems.map((item) => {
               const totalQty = item.variants.reduce((s, v) => s + v.quantity, 0);
@@ -114,7 +119,7 @@ const Shop = () => {
                   className="group bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300 cursor-pointer"
                   onClick={() => setSelectedItem(item)}
                 >
-                  <div className="relative aspect-[3/4] overflow-hidden">
+                  <div className="relative aspect-3/4 overflow-hidden">
                     <Image
                       src={item.imageUrl}
                       alt={item.name}
@@ -228,7 +233,7 @@ const Shop = () => {
                 <div className="p-4 space-y-3">
                   {cart.map((c) => (
                     <div key={`${c.itemId}-${c.size}`} className="flex gap-3 items-center">
-                      <div className="relative h-16 w-12 flex-shrink-0">
+                      <div className="relative h-16 w-12 shrink-0">
                         <Image
                           src={c.imageUrl}
                           alt={c.name}
