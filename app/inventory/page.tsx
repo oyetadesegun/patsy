@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, PackageOpen } from "lucide-react";
+import { Search, PackageOpen, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddItemDialog } from "@/components/AddItemDialog";
@@ -119,6 +120,18 @@ function InventoryContent() {
         <TabsContent value="in-stock" className="mt-0">{renderGrid(inStockItems)}</TabsContent>
         <TabsContent value="out-of-stock" className="mt-0">{renderGrid(outOfStockItems)}</TabsContent>
       </Tabs>
+
+      {/* Floating Action Button */}
+      <div className="fixed bottom-20 right-6 sm:bottom-8 sm:right-8 z-50">
+        <AddItemDialog 
+          onAdd={addItem} 
+          trigger={
+            <Button size="icon" className="h-14 w-14 rounded-full shadow-2xl bg-primary hover:bg-primary/90 transition-all hover:scale-110 active:scale-95 group">
+              <Plus className="h-6 w-6 text-white group-hover:rotate-90 transition-transform duration-300" />
+            </Button>
+          }
+        />
+      </div>
     </main>
   );
 

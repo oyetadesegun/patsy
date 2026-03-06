@@ -85,10 +85,30 @@ export function AddItemDialog({ onAdd, onUpdate, initialData, trigger }: AddItem
   const handleSubmit = () => {
     if (!name || !type || !imageUrl) return;
     
+    const trimmedName = name.trim();
+    const trimmedVariants = variants.map(v => ({
+      ...v,
+      color: v.color.trim()
+    }));
+
     if (initialData && onUpdate) {
-      onUpdate(initialData.id, { name, type, imageUrl, variants, price, performedBy: user || "unknown" });
+      onUpdate(initialData.id, { 
+        name: trimmedName, 
+        type, 
+        imageUrl, 
+        variants: trimmedVariants, 
+        price, 
+        performedBy: user || "unknown" 
+      });
     } else if (onAdd) {
-      onAdd({ name, type, imageUrl, variants, price, performedBy: user || "unknown" });
+      onAdd({ 
+        name: trimmedName, 
+        type, 
+        imageUrl, 
+        variants: trimmedVariants, 
+        price, 
+        performedBy: user || "unknown" 
+      });
     }
 
     if (!initialData) {

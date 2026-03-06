@@ -11,7 +11,8 @@ import {
 
 export function useInventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, _setSearchQuery] = useState("");
+  const setSearchQuery = (val: string) => _setSearchQuery(val.trimStart());
   const [filterType, setFilterType] = useState("all");
   const [filterColor, setFilterColor] = useState("");
   const [filterSize, setFilterSize] = useState("all");
@@ -117,18 +118,35 @@ export function useInventory() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(item),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add item");
+      }
+
       const data = await response.json();
       // Replace temp item with real one
       setItems((prev) => prev.map((i) => (i.id === tempId ? data : i)));
-    } catch (error) {
-      console.warn("Offline: Queueing add operation");
-      await saveOfflineOperation({
-        id: tempId,
-        type: "add",
-        data: item,
-        status: "pending",
-        createdAt: Date.now(),
-      });
+    } catch (error: any) {
+      console.warn(
+        "API Error or Offline: Queueing add operation",
+        error.message,
+      );
+      // If it was a real API error (not network), we might want to revert the optimistic update
+      // but if it's offline, we keep it and queue.
+      if (!navigator.onLine || error.message === "Failed to fetch") {
+        await saveOfflineOperation({
+          id: tempId,
+          type: "add",
+          data: item,
+          status: "pending",
+          createdAt: Date.now(),
+        });
+      } else {
+        // Real server error, remove the optimistic item
+        setItems((prev) => prev.filter((i) => i.id !== tempId));
+        alert(`Error: ${error.message}`);
+      }
     }
   };
 
